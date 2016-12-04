@@ -1,8 +1,9 @@
 module Game where
 
-import Data.Semigroup
 import Control.Monad (forever)
 import System.Exit (exitSuccess)
+import Data.Semigroup
+import Data.Monoid (mempty)
 
 data Point = Point { x :: Integer
                    , y :: Integer }
@@ -17,25 +18,31 @@ instance Monoid Point where
   mempty = Point 0 0
   mappend = (<>)
 
-movePoint :: Char -> Maybe Point
-movePoint c
-  | c == 'a' = Just $ mempty <> Point (-1) 0
-  | c == 's' = Just $ mempty <> Point 0 (-1)
-  | c == 'd' = Just $ mempty <> Point 1 0
-  | c == 'w' = Just $ mempty <> Point 0 1
-  | otherwise = Nothing
+movePoint :: Game -> Char -> IO Game
+movePoint (Game p) c =
+  return
+  $ Game
+  $ case c of
+      'a' -> p <> Point (-1) 0
+      's' -> p <> Point 0 (-1)
+      'd' -> p <> Point 1 0
+      'w' -> p <> Point 0 1
 
-doMovePoint :: Char -> IO ()
-doMovePoint = putStrLn
-              . show
-              . movePoint
+data Game = Game Point deriving Show
 
-something :: Char -> IO ()
-something a
-  | elem a "wasd" = doMovePoint a
-  | otherwise = exitSuccess
+runGame :: Game -> IO ()
+runGame game = forever $ do
+  putStrLn (show game)
+  putStrLn "Move you point!"
+  c <- getChar
+  exitWhenInvalid c
+  (movePoint game c) >>= runGame
+
+exitWhenInvalid :: Char -> IO ()
+exitWhenInvalid c
+  | notElem c "wasd" = exitSuccess
+  | otherwise = return ()
 
 main :: IO ()
-main = forever $ do
-  line <- getChar
-  something line
+main = do
+  runGame (Game $ Point 0 0)
