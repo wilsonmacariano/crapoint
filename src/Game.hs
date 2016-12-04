@@ -36,7 +36,7 @@ runGame game = forever $ do
   putStrLn "Move you point!"
   c <- getChar
   exitWhenInvalid c
-  (movePoint game c) >>= runGame
+  movePoint game c >>= runGame
 
 exitWhenInvalid :: Char -> IO ()
 exitWhenInvalid c
